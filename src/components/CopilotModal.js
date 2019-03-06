@@ -152,7 +152,7 @@ class CopilotModal extends Component<Props, State> {
     }
 
     const animate = {
-      top: obj.top,
+      top: obj.top < (STEP_NUMBER_DIAMETER / 2) ? 0 + (STEP_NUMBER_DIAMETER / 2)  : obj.top,
       stepNumberLeft,
     };
 
@@ -236,6 +236,7 @@ class CopilotModal extends Component<Props, State> {
         position={this.state.position}
         easing={this.props.easing}
         animationDuration={this.props.animationDuration}
+        backdropColor='rgba(0,0,0,0.2)'
       />
     );
   }

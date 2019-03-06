@@ -21,7 +21,6 @@ type Props = {
   overlay: 'svg' | 'view',
   animated: boolean,
   androidStatusBarVisible: boolean,
-  backdropColor: string
 };
 
 type State = {
@@ -48,7 +47,6 @@ class CopilotModal extends Component<Props, State> {
     // If animated was not specified, rely on the default overlay type
     animated: typeof NativeModules.RNSVGSvgViewManager !== 'undefined',
     androidStatusBarVisible: false,
-    backdropColor: 'rgba(0, 0, 0, 0.4)',
   };
 
   state = {
@@ -111,7 +109,6 @@ class CopilotModal extends Component<Props, State> {
         stepNumberLeft = layout.width - STEP_NUMBER_DIAMETER;
       }
     }
-
     const center = {
       x: obj.left + (obj.width / 2),
       y: obj.top + (obj.height / 2),
@@ -121,21 +118,25 @@ class CopilotModal extends Component<Props, State> {
     const relativeToTop = center.y;
     const relativeToBottom = Math.abs(center.y - layout.height);
     const relativeToRight = Math.abs(center.x - layout.width);
-
     const verticalPosition = relativeToBottom > relativeToTop ? 'bottom' : 'top';
     const horizontalPosition = relativeToLeft > relativeToRight ? 'left' : 'right';
 
     const tooltip = {};
     const arrow = {};
-
     if (verticalPosition === 'bottom') {
       tooltip.top = obj.top + obj.height + MARGIN;
       arrow.borderBottomColor = '#fff';
       arrow.top = tooltip.top - (ARROW_SIZE * 2);
     } else {
       tooltip.bottom = layout.height - (obj.top - MARGIN);
-      arrow.borderTopColor = '#fff';
-      arrow.bottom = tooltip.bottom - (ARROW_SIZE * 2);
+      if(obj.top < this.tooltipLayout.height){
+        tooltip.bottom = tooltip.bottom - this.tooltipLayout.height - MARGIN - (ARROW_SIZE * 2);
+        arrow.borderBottomColor = '#fff';
+        arrow.top = obj.top;
+      }else{
+        arrow.borderTopColor = '#fff';
+        arrow.bottom = tooltip.bottom - (ARROW_SIZE * 2);
+      }
     }
 
     if (horizontalPosition === 'left') {
@@ -225,6 +226,7 @@ class CopilotModal extends Component<Props, State> {
       ? require('./SvgMask').default
       : require('./ViewMask').default;
     /* eslint-enable */
+
     return (
       <MaskComponent
         animated={this.props.animated}
@@ -234,7 +236,6 @@ class CopilotModal extends Component<Props, State> {
         position={this.state.position}
         easing={this.props.easing}
         animationDuration={this.props.animationDuration}
-        backdropColor={this.props.backdropColor}
       />
     );
   }
@@ -244,7 +245,6 @@ class CopilotModal extends Component<Props, State> {
       tooltipComponent: TooltipComponent,
       stepNumberComponent: StepNumberComponent,
     } = this.props;
-
     return [
       <Animated.View
         key="stepNumber"
@@ -264,7 +264,9 @@ class CopilotModal extends Component<Props, State> {
         />
       </Animated.View>,
       <Animated.View key="arrow" style={[styles.arrow, this.state.arrow]} />,
-      <Animated.View key="tooltip" style={[styles.tooltip, this.state.tooltip]}>
+      <Animated.View key="tooltip" style={[styles.tooltip, this.state.tooltip]} onLayout={ ({ nativeEvent: { layout } }) => {
+        this.tooltipLayout = layout;
+      } }>
         <TooltipComponent
           isFirstStep={this.props.isFirstStep}
           isLastStep={this.props.isLastStep}
@@ -287,7 +289,6 @@ class CopilotModal extends Component<Props, State> {
         visible={containerVisible}
         onRequestClose={noop}
         transparent
-        supportedOrientations={['portrait', 'landscape']}
       >
         <View
           style={styles.container}
